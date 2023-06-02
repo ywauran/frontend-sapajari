@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_learn">
+
+    <fragment
+        android:id="@+id/navigation_learn"
+        android:name="com.ywauran.sapajari.ui.learn.LearnFragment"
+        android:label="Belajar"
+        tools:layout="@layout/fragment_learn" />
+
+    <fragment
+        android:id="@+id/navigation_challenge"
+        android:name="com.ywauran.sapajari.ui.challenge.ChallengeFragment"
+        android:label="Tantangan"
+        tools:layout="@layout/fragment_challenge" />
+
+    <fragment
+        android:id="@+id/navigation_glossary"
+        android:name="com.ywauran.sapajari.ui.glossary.GlossaryFragment"
+        android:label="Kamus"
+        tools:layout="@layout/fragment_glossary" />
+</navigation>
