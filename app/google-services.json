@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "369151717141",
+    "firebase_url": "https://sapajari-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "sapajari",
+    "storage_bucket": "sapajari.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:369151717141:android:7030bdd3dd78e89f23031c",
+        "android_client_info": {
+          "package_name": "com.ywauran.sapajari"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "369151717141-aq0n0uqn4mi5kn9ta6saa9c5oqnms84u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ywauran.sapajari",
+            "certificate_hash": "ec85915ac46cd6e9f2e53b0fcf607870b23bc482"
+          }
+        },
+        {
+          "client_id": "369151717141-5tecibd1s6a8r0vq0h0j0dkjbbpjoqmp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtL-DdgNN5Qq4H9hNLKE9XehuZd1C0oeA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "369151717141-5tecibd1s6a8r0vq0h0j0dkjbbpjoqmp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

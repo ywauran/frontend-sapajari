@@ -1,4 +1,4 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#FF5722" /> <!-- Button color in normal state -->
+    <solid android:color="@color/lightPrimary" /> <!-- Button color in normal state -->
     <corners android:radius="4dp" /> <!-- Button corner radius -->
 </shape>

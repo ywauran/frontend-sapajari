@@ -1,0 +1,26 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tv_description_number_modal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Number Modal"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+
+    <!-- ImageView to display number image -->
+    <ImageView
+        android:id="@+id/iv_number_modal"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:scaleType="centerCrop"/>
+
+    <!-- Add your UI components for the number modal here -->
+
+    <!-- Add any other components or customizations as needed -->
+</LinearLayout>

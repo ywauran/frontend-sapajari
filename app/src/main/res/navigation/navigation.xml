@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/navigation_learn">
+    app:startDestination="@+id/navigation_glossary">
 
     <fragment
         android:id="@+id/navigation_learn"
@@ -12,14 +12,14 @@
         tools:layout="@layout/fragment_learn" />
 
     <fragment
-        android:id="@+id/navigation_challenge"
-        android:name="com.ywauran.sapajari.ui.challenge.ChallengeFragment"
-        android:label="Tantangan"
-        tools:layout="@layout/fragment_challenge" />
-
-    <fragment
         android:id="@+id/navigation_glossary"
         android:name="com.ywauran.sapajari.ui.glossary.GlossaryFragment"
         android:label="Kamus"
         tools:layout="@layout/fragment_glossary" />
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.ywauran.sapajari.ui.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
 </navigation>

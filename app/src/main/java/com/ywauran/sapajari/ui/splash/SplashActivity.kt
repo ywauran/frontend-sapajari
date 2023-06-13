@@ -5,9 +5,11 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.view.Window
-import com.ywauran.sapajari.R
+import com.google.firebase.auth.FirebaseAuth
+import com.ywauran.sapajari.MainActivity
 import com.ywauran.sapajari.databinding.ActivitySplashBinding
-import com.ywauran.sapajari.ui.auth.login.LoginActivity
+import com.ywauran.sapajari.ui.auth.AuthActivity
+import com.ywauran.sapajari.ui.challenge.ChallengeActivity
 
 class SplashActivity : AppCompatActivity() {
     companion object {
@@ -15,6 +17,7 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivitySplashBinding
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,13 +25,19 @@ class SplashActivity : AppCompatActivity() {
         window.requestFeature(Window.FEATURE_NO_TITLE)
         supportActionBar?.hide()
 
-
         binding = ActivitySplashBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
 
+        auth = FirebaseAuth.getInstance()
+
         Handler().postDelayed({
-            val intent = Intent(this@SplashActivity, LoginActivity::class.java)
+            val currentUser = auth.currentUser
+            val intent = if (currentUser != null) {
+                Intent(this@SplashActivity, MainActivity::class.java)
+            } else {
+                Intent(this@SplashActivity, AuthActivity::class.java)
+            }
             startActivity(intent)
             finish()
         }, SPLASH_DURATION)
