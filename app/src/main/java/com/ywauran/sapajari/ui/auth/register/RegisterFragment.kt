@@ -48,7 +48,7 @@ class RegisterFragment : Fragment() {
                                 saveUserData(email, fullName)
                                 Toast.makeText(
                                     requireContext(),
-                                    "Registration Successful! Please log in.",
+                                    "Berhasil Daftar, Silahkan Masuk!",
                                     Toast.LENGTH_SHORT
                                 ).show()
                                 val intent = Intent(requireContext(), AuthActivity::class.java)
@@ -63,10 +63,10 @@ class RegisterFragment : Fragment() {
                             }
                         }
                 } else {
-                    Toast.makeText(requireContext(), "Password is not matching", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Kata Sandi Tidak Cocok", Toast.LENGTH_SHORT).show()
                 }
             } else {
-                Toast.makeText(requireContext(), "Empty Fields Are not Allowed !!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Masih ada inputan yang kosong!!", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -93,7 +93,7 @@ class RegisterFragment : Fragment() {
                 .addOnSuccessListener {
                     Toast.makeText(
                         requireContext(),
-                        "User data saved successfully",
+                        "Berhasil Daftar",
                         Toast.LENGTH_SHORT
                     ).show()
                 }

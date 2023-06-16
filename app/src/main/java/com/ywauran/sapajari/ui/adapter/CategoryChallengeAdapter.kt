@@ -48,7 +48,7 @@ class CategoryChallengeAdapter(
 
             // Load the image using Glide or any other image loading library
             Glide.with(itemView)
-                .load("http://192.168.1.5:8000/images/category-challenge/${item.image}")
+                .load("https://backend-sapajari-sllsn77ftq-et.a.run.app/images/category-challenge/${item.image}")
                 .into(categoryImageView)
 
             itemView.setOnClickListener {

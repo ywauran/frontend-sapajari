@@ -44,7 +44,7 @@ class LoginFragment : Fragment() {
                         }
                     }
             } else {
-                Toast.makeText(requireContext(), "Please enter email and password", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Masukan Email dan Kata Sandi", Toast.LENGTH_SHORT).show()
             }
         }
     }
