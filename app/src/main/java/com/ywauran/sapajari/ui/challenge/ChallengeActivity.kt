@@ -1,176 +1,202 @@
 package com.ywauran.sapajari.ui.challenge
 
-import android.annotation.SuppressLint
+import ApiConfig
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.*
-import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
-import android.view.Surface
-import android.view.TextureView
-import android.widget.ImageView
-import android.widget.TextView
+import android.view.View
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.AspectRatio
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
-import com.ywauran.sapajari.R
+import com.ywauran.sapajari.data.remote.response.PredictResponse
 import com.ywauran.sapajari.databinding.ActivityChallengeBinding
-import com.ywauran.sapajari.ml.SsdMobilenetV11Metadata1
-import org.tensorflow.lite.support.common.FileUtil
-import org.tensorflow.lite.support.image.ImageProcessor
-import org.tensorflow.lite.support.image.TensorImage
-import org.tensorflow.lite.support.image.ops.ResizeOp
+import com.ywauran.sapajari.model.ChallengeModel
+import com.ywauran.sapajari.ui.adapter.ChallengeAdapter
+import com.ywauran.sapajari.utils.tmpFile
+import com.ywauran.sapajari.utils.uriToFile
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class ChallengeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityChallengeBinding
-    private lateinit var labels: List<String>
-    private val colors = listOf<Int>(
-        Color.BLUE, Color.GREEN, Color.RED, Color.CYAN, Color.GRAY, Color.BLACK,
-        Color.DKGRAY, Color.MAGENTA, Color.YELLOW, Color.RED
-    )
-    private val paint = Paint()
-    private lateinit var imageProcessor: ImageProcessor
-    private lateinit var bitmap: Bitmap
-    private lateinit var cameraDevice: CameraDevice
-    private lateinit var handler: Handler
-    private lateinit var cameraManager: CameraManager
-    private lateinit var model: SsdMobilenetV11Metadata1
-    private lateinit var outputTextView: TextView
+    private var cameraSelector: CameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+    private var imgCapture: ImageCapture? = null
+    private lateinit var challengeQuestion: ArrayList<ChallengeModel>
+    private var quizState = 0
+
+    private val adapter by lazy { ChallengeAdapter() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChallengeBinding.inflate(layoutInflater)
         val view = binding.root
+        supportActionBar?.hide()
         setContentView(view)
         getPermission()
+        val getData = intent.getParcelableArrayListExtra<ChallengeModel>(KEY_CHALLANGE)
+        if (getData != null) {
+            challengeQuestion = getData
+            adapter.setItems(challengeQuestion)
+        }
+        binding.rvQuestion.adapter = adapter
+        binding.buttonCapture.setOnClickListener {
+            captureImage()
+        }
+        binding.cardBack.setOnClickListener {
+            finish()
+        }
+        openCamera()
+    }
 
-        labels = FileUtil.loadLabels(this, "labels.txt")
-        imageProcessor = ImageProcessor.Builder().add(ResizeOp(300, 300, ResizeOp.ResizeMethod.BILINEAR)).build()
-        model = SsdMobilenetV11Metadata1.newInstance(this)
-        val handlerThread = HandlerThread("videoThread")
-        handlerThread.start()
-        handler = Handler(handlerThread.looper)
 
-        outputTextView = findViewById(R.id.tv_output)
+    private fun captureImage() {
+        val toCapture = imgCapture ?: return
+        val file = tmpFile(this@ChallengeActivity)
+        val outputOption = ImageCapture.OutputFileOptions.Builder(file).build()
 
-        binding.tvTexture.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-            override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
-                openCamera()
-            }
+        toCapture.takePicture(outputOption,
+            ContextCompat.getMainExecutor(this@ChallengeActivity),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    binding.buttonCapture.isEnabled = false
 
-            override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {
-            }
-
-            override fun onSurfaceTextureDestroyed(p0: SurfaceTexture): Boolean {
-                return false
-            }
-
-            override fun onSurfaceTextureUpdated(p0: SurfaceTexture) {
-                bitmap = binding.tvTexture.bitmap!!
-                var image = TensorImage.fromBitmap(bitmap)
-                image = imageProcessor.process(image)
-
-                val outputs = model.process(image)
-                val locations = outputs.locationsAsTensorBuffer.floatArray
-                val classes = outputs.classesAsTensorBuffer.floatArray
-                val scores = outputs.scoresAsTensorBuffer.floatArray
-                val numberOfDetections = outputs.numberOfDetectionsAsTensorBuffer.floatArray
-
-                var mutable = bitmap.copy(Bitmap.Config.ARGB_8888, true)
-                val canvas = Canvas(mutable)
-
-                val h = mutable.height
-                val w = mutable.width
-                paint.textSize = h / 15f
-                paint.strokeWidth = h / 85f
-                var x = 0
-                scores.forEachIndexed { index, fl ->
-                    x = index
-                    x *= 4
-                    if (fl > 0.5) {
-                        paint.setColor(colors.get(index))
-                        paint.style = Paint.Style.STROKE
-                        canvas.drawRect(
-                            RectF(
-                                locations.get(x + 1) * w,
-                                locations.get(x) * h,
-                                locations.get(x + 3) * w,
-                                locations.get(x + 2) * h
-                            ), paint
-                        )
-                        paint.style = Paint.Style.FILL
-                        canvas.drawText(
-                            labels.get(classes.get(index).toInt()) + " " + fl.toString(),
-                            locations.get(x + 1) * w,
-                            locations.get(x) * h,
-                            paint
-                        )
-                    }
+                    //bisa handle disini kalo camera gagal capture mau diapain
                 }
 
-                binding.ivPreview.setImageBitmap(mutable)
-                val outputText = buildOutputText(classes, scores)
-                outputTextView.text = outputText
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    //logic loading
+                    binding.buttonCapture.visibility = View.INVISIBLE
+                    binding.progressBar.visibility = View.VISIBLE
+                    output.savedUri?.let {
+                        val file = it.uriToFile(this@ChallengeActivity)
+                        val requestImageFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                        val imageMultipart: MultipartBody.Part = requestImageFile.let { it1 ->
+                            MultipartBody.Part.createFormData(
+                                "image",
+                                file.name,
+                                it1
+                            )
+                        }
+                        //call api
+                        val service = ApiConfig.getPredictApiService()
+                        val predict = service.predict(imageMultipart)
+                        predict.enqueue(object : Callback<PredictResponse> {
+                            override fun onResponse(
+                                call: Call<PredictResponse>,
+                                response: Response<PredictResponse>
+                            ) {
+                                binding.buttonCapture.visibility = View.VISIBLE
+                                binding.progressBar.visibility = View.GONE
+                                if (response.isSuccessful) {
+                                    val res = response.body()
+                                    if (this@ChallengeActivity::challengeQuestion.isInitialized && res != null) {
+                                        if (res.status) {
+                                            val currentQuestion =
+                                                challengeQuestion[quizState].char.toString().lowercase()
+                                            val isAnswerCorrect =
+                                                (res.data?.lowercase() ?: "") == currentQuestion
+
+                                            if (isAnswerCorrect) {
+                                                if (quizState < challengeQuestion.size-1) {
+                                                    // Handle ke soal berikutnya
+                                                    challengeQuestion[quizState].isSelected = false
+                                                    challengeQuestion[quizState].isCorrect = true
+                                                    if(challengeQuestion.size-1 > quizState){
+                                                        challengeQuestion[quizState+1].isSelected = true
+                                                    }
+                                                    adapter.setItems(challengeQuestion)
+                                                    quizState++
+                                                    Toast.makeText(this@ChallengeActivity, "Benar!!! ^_^", Toast.LENGTH_SHORT)
+                                                        .show()
+                                                } else {
+                                                    // Handle kalo semua elemen quiz beres
+                                                    Toast.makeText(
+                                                        this@ChallengeActivity,
+                                                        "Selamat! Kamu telah menyelesaikan challenge",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                    finish()
+                                                }
+                                            } else {
+                                                // Handle kalo jari kedetek tapi ga sesuai dengan quiz state sekarang
+                                                Toast.makeText(
+                                                    this@ChallengeActivity,
+                                                    "Oops! Bahasa isyarat salah, itu adalah ${res.data}",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        } else {
+                                            // Handle kalo jari tidak kedeteksi sama sekali
+                                            Toast.makeText(
+                                                this@ChallengeActivity,
+                                                "Oops, tidak ada jari yang terdeteksi!",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                } else {
+                                    // Handle kalo network call tidak berhasil
+                                    Toast.makeText(
+                                        this@ChallengeActivity,
+                                        "Error!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+
+                            override fun onFailure(call: Call<PredictResponse>, t: Throwable) {
+                                binding.buttonCapture.visibility = View.VISIBLE
+                                binding.progressBar.visibility = View.GONE
+                                //handle kalo network call gak sucess
+                                Toast.makeText(
+                                    this@ChallengeActivity,
+                                    "Network Error!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        })
+                    }
+                }
             }
-        }
-
-        cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        )
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        model.close()
-    }
-
-    @SuppressLint("MissingPermission")
     private fun openCamera() {
-        val cameraId = getFrontCameraId()
-        cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
-            override fun onOpened(p0: CameraDevice) {
-                cameraDevice = p0
+        val futureProvider = ProcessCameraProvider.getInstance(this)
+        futureProvider.addListener({
+            imgCapture = ImageCapture.Builder().build()
 
-                val surfaceTexture = binding.tvTexture.surfaceTexture
-                val surface = Surface(surfaceTexture)
+            val provider = futureProvider.get()
+            val preview = Preview.Builder()
+                .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                .build().apply {
+                    setSurfaceProvider(binding.cameraView.surfaceProvider)
+                }
 
-                val captureRequest = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                captureRequest.addTarget(surface)
-
-                cameraDevice.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
-                    override fun onConfigured(p0: CameraCaptureSession) {
-                        p0.setRepeatingRequest(captureRequest.build(), null, null)
-                    }
-
-                    override fun onConfigureFailed(p0: CameraCaptureSession) {
-                    }
-                }, handler)
+            try {
+                provider.apply {
+                    binding.buttonCapture.visibility = View.VISIBLE
+                    unbindAll()
+                    bindToLifecycle(this@ChallengeActivity, cameraSelector, preview, imgCapture)
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show()
             }
-
-            override fun onDisconnected(p0: CameraDevice) {
-
-            }
-
-            override fun onError(p0: CameraDevice, p1: Int) {
-
-            }
-        }, handler)
+        }, ContextCompat.getMainExecutor(this))
     }
 
-    private fun getFrontCameraId(): String {
-        val cameraIds = cameraManager.cameraIdList
-        for (cameraId in cameraIds) {
-            val cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraId)
-            val lensFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
-            if (lensFacing == CameraCharacteristics.LENS_FACING_FRONT) {
-                return cameraId
-            }
-        }
-        throw RuntimeException("Front camera not found")
-    }
 
     private fun getPermission() {
         if (ContextCompat.checkSelfPermission(
@@ -180,6 +206,7 @@ class ChallengeActivity : AppCompatActivity() {
         ) {
             requestPermissions(arrayOf(android.Manifest.permission.CAMERA), 101)
         }
+
     }
 
     override fun onRequestPermissionsResult(
@@ -193,16 +220,13 @@ class ChallengeActivity : AppCompatActivity() {
         }
     }
 
-    private fun buildOutputText(classes: FloatArray, scores: FloatArray): String {
-        val outputText = StringBuilder()
-        for (index in classes.indices) {
-            val confidence = scores[index]
-            if (confidence > 0.5) {
-                val className = labels[classes[index].toInt()]
-                val detectionInfo = "$className: ${confidence.toString()}\n"
-                outputText.append(detectionInfo)
-            }
+    companion object {
+
+        const val KEY_CHALLANGE = "challengeList"
+        fun start(ctx: Context, data: List<ChallengeModel>) {
+            val i = Intent(ctx, ChallengeActivity::class.java)
+            i.putParcelableArrayListExtra(KEY_CHALLANGE, ArrayList(data))
+            ctx.startActivity(i)
         }
-        return outputText.toString()
     }
 }

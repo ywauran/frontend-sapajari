@@ -1,10 +1,9 @@
 package com.ywauran.sapajari.data.remote.api
 
-import com.ywauran.sapajari.data.remote.response.CategoryChallengeResponse
-import com.ywauran.sapajari.data.remote.response.LetterResponse
-import com.ywauran.sapajari.data.remote.response.NumberResponse
+import com.ywauran.sapajari.data.remote.response.*
+import okhttp3.MultipartBody
 import retrofit2.Call
-import retrofit2.http.GET
+import retrofit2.http.*
 
 interface ApiService {
 
@@ -16,4 +15,11 @@ interface ApiService {
 
     @GET("letters")
     fun getLetters(): Call<List<LetterResponse>>
+
+    @GET("/random-challenge/{id}")
+    fun getRandomChallenge(@Path("id") id: Int): Call<List<RandomChallengeResponse>>
+
+    @Multipart
+    @POST("predict")
+    fun predict(@Part image: MultipartBody.Part): Call<PredictResponse>
 }
