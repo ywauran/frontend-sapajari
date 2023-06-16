@@ -63,11 +63,9 @@ class GlossaryFragment : Fragment() {
         usersRef.addValueEventListener(usersListener)
     }
 
-
-
     private fun setupRecyclerView() {
         numberAdapter = NumberAdapter { numberResponse ->
-            val numberModalFragment = NumberModalFragment.newInstance(numberResponse.description.toString(), numberResponse.image.toString())
+            val numberModalFragment = NumberModalFragment.newInstance(numberResponse.description.toString(), numberResponse.url.toString())
             numberModalFragment.show(parentFragmentManager, "NumberModalFragment")
         }
 
@@ -77,7 +75,7 @@ class GlossaryFragment : Fragment() {
         }
 
         letterAdapter = LetterAdapter { letterResponse ->
-            val letterModalFragment = LetterModalFragment.newInstance(letterResponse.description.toString(), letterResponse.image.toString())
+            val letterModalFragment = LetterModalFragment.newInstance(letterResponse.description.toString(), letterResponse.url.toString())
             letterModalFragment.show(parentFragmentManager, "LetterModalFragment")
         }
 

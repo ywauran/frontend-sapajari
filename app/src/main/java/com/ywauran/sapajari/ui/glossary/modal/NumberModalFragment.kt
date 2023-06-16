@@ -43,11 +43,9 @@ class NumberModalFragment : DialogFragment() {
 
             descriptionTextView.text = symbol
 
-            imageUrl?.let { image ->
-                Glide.with(this)
-                    .load("http://192.168.1.7:8000/images/numbers/${image}")
-                    .into(numberImageView)
-            }
+            Glide.with(this)
+                .load(imageUrl)
+                .into(numberImageView)
         }
 
         return rootView

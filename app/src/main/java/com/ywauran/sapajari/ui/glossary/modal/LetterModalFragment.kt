@@ -43,11 +43,10 @@ class LetterModalFragment : DialogFragment() {
 
             descriptionTextView.text = symbol
 
-            imageUrl?.let { image ->
-                Glide.with(this)
-                    .load("http://192.168.1.7:8000/images/letters/${image}")
-                    .into(letterImageView)
-            }
+            Glide.with(this)
+                .load(imageUrl)
+                .into(letterImageView)
+
         }
 
         return rootView
